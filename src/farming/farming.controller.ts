@@ -14,17 +14,43 @@ export class FarmingController {
 
   @Post('gem')
   async farmGem(@Body() gemFarmDto: GemFarmDto) {
+    if (gemFarmDto.times && gemFarmDto.times > 1) {
+      return await this.farmingService.farmGemBatch(
+        gemFarmDto.jwt,
+        gemFarmDto.times,
+      );
+    }
     return await this.farmingService.farmGem(gemFarmDto.jwt);
   }
 
   @Post('xp/session')
   async farmXpSession(@Body() xpFarmDto: XpFarmDto) {
-    return await this.farmingService.farmXpSession(xpFarmDto.jwt, xpFarmDto.amount);
+    if (xpFarmDto.times && xpFarmDto.times > 1) {
+      return await this.farmingService.farmXpSessionBatch(
+        xpFarmDto.jwt,
+        xpFarmDto.amount,
+        xpFarmDto.times,
+      );
+    }
+    return await this.farmingService.farmXpSession(
+      xpFarmDto.jwt,
+      xpFarmDto.amount,
+    );
   }
 
   @Post('xp/story')
   async farmXpStory(@Body() xpFarmDto: XpFarmDto) {
-    return await this.farmingService.farmXpStory(xpFarmDto.jwt, xpFarmDto.amount);
+    if (xpFarmDto.times && xpFarmDto.times > 1) {
+      return await this.farmingService.farmXpStoryBatch(
+        xpFarmDto.jwt,
+        xpFarmDto.amount,
+        xpFarmDto.times,
+      );
+    }
+    return await this.farmingService.farmXpStory(
+      xpFarmDto.jwt,
+      xpFarmDto.amount,
+    );
   }
 
   @Post('streak/farm')

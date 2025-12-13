@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max } from 'class-validator';
 
 export class XpFarmDto {
   @IsString()
@@ -7,5 +7,11 @@ export class XpFarmDto {
 
   @IsNumber()
   amount: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(10)
+  times?: number;
 }
 

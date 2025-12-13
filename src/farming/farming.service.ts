@@ -96,6 +96,123 @@ export class FarmingService {
     return configs[amount] || null;
   }
 
+  private async executeBatch<T>(
+    farmFunction: () => Promise<T>,
+    times: number,
+    delayMs: number = 100,
+  ): Promise<{
+    totalTimes: number;
+    successCount: number;
+    failedCount: number;
+    results: Array<{ index: number; success: boolean; data?: T; error?: string }>;
+  }> {
+    const results: Array<{
+      index: number;
+      success: boolean;
+      data?: T;
+      error?: string;
+    }> = [];
+
+    const promises = Array.from({ length: times }, (_, index) => {
+      return new Promise<{
+        index: number;
+        success: boolean;
+        data?: T;
+        error?: string;
+      }>((resolve) => {
+        setTimeout(async () => {
+          try {
+            const data = await farmFunction();
+            resolve({ index: index + 1, success: true, data });
+          } catch (error) {
+            const errorMessage =
+              error instanceof HttpException
+                ? error.message
+                : error.message || 'Unknown error';
+            resolve({ index: index + 1, success: false, error: errorMessage });
+          }
+        }, index * delayMs);
+      });
+    });
+
+    const settledResults = await Promise.allSettled(promises);
+
+    settledResults.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        results.push(result.value);
+      } else {
+        results.push({
+          index: results.length + 1,
+          success: false,
+          error: result.reason?.message || 'Unknown error',
+        });
+      }
+    });
+
+    const successCount = results.filter((r) => r.success).length;
+    const failedCount = results.filter((r) => !r.success).length;
+
+    return {
+      totalTimes: times,
+      successCount,
+      failedCount,
+      results,
+    };
+  }
+
+  async farmGemBatch(
+    jwt: string,
+    times: number,
+  ): Promise<{
+    totalTimes: number;
+    successCount: number;
+    failedCount: number;
+    results: Array<{
+      index: number;
+      success: boolean;
+      data?: { success: boolean; message?: string };
+      error?: string;
+    }>;
+  }> {
+    return this.executeBatch(() => this.farmGem(jwt), times, 100);
+  }
+
+  async farmXpSessionBatch(
+    jwt: string,
+    amount: number,
+    times: number,
+  ): Promise<{
+    totalTimes: number;
+    successCount: number;
+    failedCount: number;
+    results: Array<{
+      index: number;
+      success: boolean;
+      data?: { success: boolean; xpGained?: number; message?: string };
+      error?: string;
+    }>;
+  }> {
+    return this.executeBatch(() => this.farmXpSession(jwt, amount), times, 100);
+  }
+
+  async farmXpStoryBatch(
+    jwt: string,
+    amount: number,
+    times: number,
+  ): Promise<{
+    totalTimes: number;
+    successCount: number;
+    failedCount: number;
+    results: Array<{
+      index: number;
+      success: boolean;
+      data?: { success: boolean; xpGained?: number; message?: string };
+      error?: string;
+    }>;
+  }> {
+    return this.executeBatch(() => this.farmXpStory(jwt, amount), times, 100);
+  }
+
   async farmGem(jwt: string): Promise<{ success: boolean; message?: string }> {
     try {
       this.authService.validateJwt(jwt);
