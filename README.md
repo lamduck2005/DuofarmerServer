@@ -70,15 +70,68 @@ Server runs at `http://localhost:3000`
 **Request**:
 ```json
 {
-  "jwt": "your_jwt_token"
+  "jwt": "your_jwt_token",
+  "times": 1
 }
 ```
 
-**Response Success (201)**:
+**Parameters**:
+- `jwt` (required): JWT token
+- `times` (optional): Number of times to farm (1-10). Default: 1 (single mode)
+
+**Response Success - Single Mode (201)** (when `times` is not provided or `times = 1`):
 ```json
 {
   "success": true,
   "message": "Gem farmed successfully"
+}
+```
+
+**Response Success - Batch Mode (201)** (when `times > 1`):
+```json
+{
+  "totalTimes": 5,
+  "successCount": 4,
+  "failedCount": 1,
+  "results": [
+    {
+      "index": 1,
+      "success": true,
+      "data": {
+        "success": true,
+        "message": "Gem farmed successfully"
+      }
+    },
+    {
+      "index": 2,
+      "success": true,
+      "data": {
+        "success": true,
+        "message": "Gem farmed successfully"
+      }
+    },
+    {
+      "index": 3,
+      "success": false,
+      "error": "Duolingo API error: 403 - Forbidden"
+    },
+    {
+      "index": 4,
+      "success": true,
+      "data": {
+        "success": true,
+        "message": "Gem farmed successfully"
+      }
+    },
+    {
+      "index": 5,
+      "success": true,
+      "data": {
+        "success": true,
+        "message": "Gem farmed successfully"
+      }
+    }
+  ]
 }
 ```
 
@@ -90,6 +143,11 @@ Server runs at `http://localhost:3000`
 }
 ```
 
+**Note**: 
+- Batch mode executes requests with 100ms delay between each request to avoid rate limiting
+- Uses `Promise.allSettled` - continues even if some requests fail
+- Maximum `times` value is 10
+
 ---
 
 ### 3. POST /farming/xp/session
@@ -100,18 +158,62 @@ Server runs at `http://localhost:3000`
 ```json
 {
   "jwt": "your_jwt_token",
-  "amount": 10
+  "amount": 10,
+  "times": 1
 }
 ```
 
+**Parameters**:
+- `jwt` (required): JWT token
+- `amount` (required): XP amount to farm
+- `times` (optional): Number of times to farm (1-10). Default: 1 (single mode)
+
 **Valid amounts**: `10`, `20`, `40`, `50`, `110`
 
-**Response Success (201)**:
+**Response Success - Single Mode (201)** (when `times` is not provided or `times = 1`):
 ```json
 {
   "success": true,
   "xpGained": 10,
   "message": "Session farmed successfully. XP gained: 10"
+}
+```
+
+**Response Success - Batch Mode (201)** (when `times > 1`):
+```json
+{
+  "totalTimes": 3,
+  "successCount": 3,
+  "failedCount": 0,
+  "results": [
+    {
+      "index": 1,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 10,
+        "message": "Session farmed successfully. XP gained: 10"
+      }
+    },
+    {
+      "index": 2,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 10,
+        "message": "Session farmed successfully. XP gained: 10"
+      }
+    },
+    {
+      "index": 3,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 10,
+        "message": "Session farmed successfully. XP gained: 10"
+      }
+    }
+  ]
 }
 ```
 
@@ -125,6 +227,8 @@ Server runs at `http://localhost:3000`
 
 **Note**: 
 - Amount `110` requires skillId from currentCourse. Returns 400 error if skillId is not found.
+- Batch mode executes requests with 100ms delay between each request
+- Maximum `times` value is 10
 
 ---
 
@@ -136,18 +240,62 @@ Server runs at `http://localhost:3000`
 ```json
 {
   "jwt": "your_jwt_token",
-  "amount": 50
+  "amount": 50,
+  "times": 1
 }
 ```
 
+**Parameters**:
+- `jwt` (required): JWT token
+- `amount` (required): XP amount to farm
+- `times` (optional): Number of times to farm (1-10). Default: 1 (single mode)
+
 **Valid amounts**: `50`, `100`, `200`, `300`, `400`, `499`
 
-**Response Success (201)**:
+**Response Success - Single Mode (201)** (when `times` is not provided or `times = 1`):
 ```json
 {
   "success": true,
   "xpGained": 50,
   "message": "Story farmed successfully. XP gained: 50"
+}
+```
+
+**Response Success - Batch Mode (201)** (when `times > 1`):
+```json
+{
+  "totalTimes": 3,
+  "successCount": 3,
+  "failedCount": 0,
+  "results": [
+    {
+      "index": 1,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 50,
+        "message": "Story farmed successfully. XP gained: 50"
+      }
+    },
+    {
+      "index": 2,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 50,
+        "message": "Story farmed successfully. XP gained: 50"
+      }
+    },
+    {
+      "index": 3,
+      "success": true,
+      "data": {
+        "success": true,
+        "xpGained": 50,
+        "message": "Story farmed successfully. XP gained: 50"
+      }
+    }
+  ]
 }
 ```
 
@@ -159,7 +307,10 @@ Server runs at `http://localhost:3000`
 }
 ```
 
-**Note**: Story farming only works with English course (fromLanguage = "en").
+**Note**: 
+- Story farming only works with English course (fromLanguage = "en").
+- Batch mode executes requests with 100ms delay between each request
+- Maximum `times` value is 10
 
 ---
 
@@ -231,22 +382,50 @@ Server has CORS enabled to allow client calls from browser.
 
 ## Testing
 
-E2E tests are located in `test/api.e2e-spec.ts`. Tests cover all API endpoints:
+E2E tests are located in:
+- `test/api.e2e-spec.ts` - Tests for all API endpoints (single mode)
+- `test/batch.e2e-spec.ts` - Tests for batch farming functionality
 
+**Test Coverage**:
 - GET /users/me - Get user info
-- POST /farming/gem - Farm gem
-- POST /farming/xp/session - Farm XP session (10, 20, 40, 50, 110)
-- POST /farming/xp/story - Farm XP story (50, 100, 200, 300, 400, 499)
+- POST /farming/gem - Farm gem (single and batch mode)
+- POST /farming/xp/session - Farm XP session (10, 20, 40, 50, 110) (single and batch mode)
+- POST /farming/xp/story - Farm XP story (50, 100, 200, 300, 400, 499) (single and batch mode)
 - POST /farming/streak/farm - Farm streak (not implemented)
 - POST /farming/streak/maintain - Maintain streak
 
 **Run tests**:
 ```bash
-# Run e2e tests
+# Run all e2e tests
 npm run test:e2e
+
+# Run only batch tests
+npm run test:e2e -- test/batch.e2e-spec.ts
+
+# Run only API tests
+npm run test:e2e -- test/api.e2e-spec.ts
 ```
 
 **Test JWT**: Set `TEST_JWT` in `.env` file. Tests will use this JWT token for all API calls.
+
+## Batch Farming
+
+All farming endpoints (`/farming/gem`, `/farming/xp/session`, `/farming/xp/story`) support batch mode by providing the `times` parameter (1-10).
+
+**How it works**:
+- If `times` is not provided or `times = 1`: Executes in single mode (returns single response)
+- If `times > 1`: Executes in batch mode (returns batch response with results array)
+- Batch requests are executed with 100ms delay between each request to avoid rate limiting
+- Uses `Promise.allSettled` - continues execution even if some requests fail
+- Each result in the batch response includes `index`, `success`, and either `data` (if successful) or `error` (if failed)
+
+**Example**: To farm 150 gems (5 × 30 gems), send:
+```json
+{
+  "jwt": "your_jwt_token",
+  "times": 5
+}
+```
 
 ## Notes
 
@@ -256,3 +435,4 @@ npm run test:e2e
 - SkillId for XP 110 is extracted from userInfo.currentCourse
 - All response messages are in English
 - Status codes from Duolingo API are preserved (403 → 403, not converted to 502)
+- Batch farming uses sequential execution with delay to prevent rate limiting
