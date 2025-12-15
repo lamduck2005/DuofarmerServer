@@ -316,7 +316,7 @@ Server runs at `http://localhost:3000`
 
 ### 5. POST /farming/streak/farm
 
-**Purpose**: Farm streak (not implemented yet)
+**Purpose**: Farm streak once using a backdated session (adds at least 1 streak day)
 
 **Request**:
 ```json
@@ -325,13 +325,27 @@ Server runs at `http://localhost:3000`
 }
 ```
 
-**Response (200/201)**:
+**Response Success (200/201)**:
 ```json
 {
-  "success": false,
-  "message": "Not implemented yet"
+  "success": true,
+  "message": "Streak farmed successfully"
 }
 ```
+
+**Response Error (400/403/500)**:
+```json
+{
+  "statusCode": 403,
+  "message": "Duolingo API error: 403 - Forbidden"
+}
+```
+
+**Note**:
+- Backdates one session to increment streak:
+  - Prefer `streakData.currentStreak.startDate - 1 day`
+  - Else, backdate `streak` (number) days from now
+  - Else, backdate 1 day from now
 
 ---
 
@@ -382,35 +396,38 @@ Server has CORS enabled to allow client calls from browser.
 
 ## Testing
 
-E2E tests are located in:
-- `test/api.e2e-spec.ts` - Tests for all API endpoints (single mode)
-- `test/batch.e2e-spec.ts` - Tests for batch farming functionality
-
-**Test Coverage**:
-- GET /users/me - Get user info
-- POST /farming/gem - Farm gem (single and batch mode)
-- POST /farming/xp/session - Farm XP session (10, 20, 40, 50, 110) (single and batch mode)
-- POST /farming/xp/story - Farm XP story (50, 100, 200, 300, 400, 499) (single and batch mode)
-- POST /farming/streak/farm - Farm streak (not implemented)
-- POST /farming/streak/maintain - Maintain streak
+E2E tests are split by domain for faster runs:
+- `test/users.e2e-spec.ts` – GET /users/me
+- `test/gem.e2e-spec.ts` – POST /farming/gem
+- `test/xp-session.e2e-spec.ts` – POST /farming/xp/session
+- `test/xp-story.e2e-spec.ts` – POST /farming/xp/story
+- `test/streak.e2e-spec.ts` – POST /farming/streak/farm (single) and /farming/streak/maintain
+- `test/batch.e2e-spec.ts` – Batch tests for gem/session/story
 
 **Run tests**:
 ```bash
 # Run all e2e tests
 npm run test:e2e
 
-# Run only batch tests
+# Run specific suite
+npm run test:e2e -- test/users.e2e-spec.ts
+npm run test:e2e -- test/gem.e2e-spec.ts
+npm run test:e2e -- test/xp-session.e2e-spec.ts
+npm run test:e2e -- test/xp-story.e2e-spec.ts
+npm run test:e2e -- test/streak.e2e-spec.ts
 npm run test:e2e -- test/batch.e2e-spec.ts
-
-# Run only API tests
-npm run test:e2e -- test/api.e2e-spec.ts
 ```
 
 **Test JWT**: Set `TEST_JWT` in `.env` file. Tests will use this JWT token for all API calls.
 
 ## Batch Farming
 
-All farming endpoints (`/farming/gem`, `/farming/xp/session`, `/farming/xp/story`) support batch mode by providing the `times` parameter (1-10).
+Batch mode is supported for:
+- `/farming/gem`
+- `/farming/xp/session`
+- `/farming/xp/story`
+
+Use the `times` parameter (1-10) to run multiple times in one request.
 
 **How it works**:
 - If `times` is not provided or `times = 1`: Executes in single mode (returns single response)

@@ -76,8 +76,8 @@ export class DuolingoService {
 
   async farmSession(userId: string, jwt: string, userInfo: any, config: any): Promise<any> {
     try {
-      const startTime = Math.floor(Date.now() / 1000);
-      const endTime = startTime + 60;
+      const startTime = config?.startTime ?? Math.floor(Date.now() / 1000);
+      const endTime = config?.endTime ?? startTime + 60;
 
       // POST session
       const sessionPayload = {
